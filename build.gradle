@@ -2,11 +2,9 @@ plugins {
     id 'io.kestra.gradle.repository-conventions' version '1.2.10'
     id "com.vanniktech.maven.publish" version "0.37.0"
     id "io.kestra.gradle.inject-bom-versions" version "1.2.10"
-    id "io.kestra.gradle.plugin-doc-lint" version "1.2.10"
     id 'java-library'
     id "idea"
     id 'jacoco'
-    id "com.gradleup.shadow" version "9.6.1"
     id 'signing'
     id "com.github.ben-manes.versions" version "0.61.0"
     id 'net.researchgate.release' version '3.1.0'
@@ -29,10 +27,10 @@ java {
     targetCompatibility = targetJavaVersion
 }
 
-group = "io.kestra.plugin"
-description = 'Opensearch Lib plugin for Kestra'
+group "io.kestra.plugin"
+description 'Shared kernel library for Kestra OpenSearch plugins (OSS and EE).'
 
-tasks.withType(JavaCompile).configureEach {
+tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
@@ -46,10 +44,23 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok"
     compileOnly "org.projectlombok:lombok"
 
-    // kestra
-    annotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
-    compileOnly group: "io.kestra", name: "core", version: kestraVersion
-    compileOnly group: "io.kestra", name: "script", version: kestraVersion
+    // Kestra
+    compileOnly group: "io.kestra", name: "core"
+    compileOnly group: "io.kestra", name: "script"
+
+    // Micronaut
+    compileOnly "io.micronaut.reactor:micronaut-reactor"
+
+    // Logs
+    compileOnly 'org.slf4j:slf4j-api'
+
+    // OpenSearch client exposed as api so consumers (plugin-opensearch, plugin-ee-opensearch) inherit them transitively
+    api (group: 'org.opensearch.client', name: 'opensearch-java') {
+        exclude group: 'org.apache.logging.log4j'
+    }
+    api (group: 'org.opensearch.client', name: 'opensearch-rest-client') {
+        exclude group: 'org.apache.logging.log4j'
+    }
 }
 
 
@@ -72,22 +83,26 @@ dependencies {
     // micronaut
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+
     testImplementation "io.micronaut.test:micronaut-test-junit5"
-    testImplementation "io.micronaut:micronaut-jackson-databind"
+    testImplementation "io.micronaut.reactor:micronaut-reactor"
 
     // test deps needed only for to have a runner
-    testAnnotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
-    testImplementation group: "io.kestra", name: "core", version: kestraVersion
-    testImplementation group: "io.kestra", name: "tests", version: kestraVersion
-    testImplementation group: "io.kestra", name: "script", version: kestraVersion
-    testImplementation group: "io.kestra", name: "repository-memory", version: kestraVersion
-    testImplementation group: "io.kestra", name: "runner-memory", version: kestraVersion
-    testImplementation group: "io.kestra", name: "storage-local", version: kestraVersion
+    testAnnotationProcessor group: "io.kestra", name: "processor"
+    testImplementation group: "io.kestra", name: "core"
+    testImplementation group: "io.kestra", name: "tests"
+    testImplementation group: "io.kestra", name: "script"
+    testImplementation group: "io.kestra", name: "repository-memory"
+    testImplementation group: "io.kestra", name: "runner-memory"
+    testImplementation group: "io.kestra", name: "storage-local"
 
     // test
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.junit.jupiter:junit-jupiter-params"
     testImplementation "org.hamcrest:hamcrest"
     testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testImplementation 'org.testcontainers:testcontainers:1.21.4'
 }
 
 /**********************************************************************************************************************\
@@ -118,6 +133,7 @@ jacocoTestReport {
 mavenPublishing {
     publishToMavenCentral(true)
     signAllPublications()
+
     coordinates("${project.group}", "${project.name}", "${project.version}")
     pom {
         name = "${project.name}"
@@ -148,23 +164,6 @@ tasks.withType(GenerateModuleMetadata).configureEach {
     suppressedValidationErrors.add('enforced-platform')
 }
 
-jar {
-    manifest {
-        attributes(
-            "X-Kestra-Name": project.name,
-            "X-Kestra-Title": "Opensearch Lib",
-            "X-Kestra-Group": project.group + ".opensearch-lib",
-            "X-Kestra-Description": project.description,
-            "X-Kestra-Version": project.version
-        )
-    }
-}
-
-shadowJar {
-    archiveClassifier.set(null)
-    mergeServiceFiles()
-}
-
 /**********************************************************************************************************************\
  * Version
  **********************************************************************************************************************/
@@ -178,6 +177,14 @@ release {
     git {
         requireBranch.set('main')
     }
+
+    // Dynamically set properties with default values
+    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
+        ? project.property('release.failOnSnapshotDependencies').toBoolean()
+        : true)
+    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
+        ? project.property('release.pushReleaseVersionBranch').toString()
+        : null)
 }
 
 /**********************************************************************************************************************\
