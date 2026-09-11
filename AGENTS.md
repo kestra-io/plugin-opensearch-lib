@@ -1,8 +1,8 @@
-# Kestra Template Plugin
+# Kestra Opensearch Lib Plugin
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.templates`.
+- Provides plugin components under `io.kestra.plugin.opensearch-lib`.
 - Includes classes such as `Example`, `Trigger`.
 
 ## Why
@@ -17,7 +17,7 @@
 
 Single-module plugin. Source packages under `io.kestra.plugin`:
 
-- `templates`
+- `opensearch-lib`
 
 Infrastructure dependencies (Docker Compose services):
 
@@ -25,14 +25,14 @@ Infrastructure dependencies (Docker Compose services):
 
 ### Key Plugin Classes
 
-- `io.kestra.plugin.templates.Example`
+- `io.kestra.plugin.opensearch-lib.Example`
 
 ### Project Structure
 
 ```
-plugin-template/
-├── src/main/java/io/kestra/plugin/templates/
-├── src/test/java/io/kestra/plugin/templates/
+plugin-opensearch-lib/
+├── src/main/java/io/kestra/plugin/opensearch-lib/
+├── src/test/java/io/kestra/plugin/opensearch-lib/
 ├── build.gradle
 └── README.md
 ```
