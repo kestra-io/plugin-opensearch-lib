@@ -130,11 +130,13 @@ public class OpensearchConnection {
         }
 
         if (this.getPathPrefix() != null) {
-            builder.setPathPrefix(runContext.render(this.pathPrefix).as(String.class).orElseThrow());
+            builder.setPathPrefix(runContext.render(this.pathPrefix).as(String.class)
+                .orElseThrow(() -> new IllegalArgumentException("Missing required property: pathPrefix")));
         }
 
         if (this.getStrictDeprecationMode() != null) {
-            builder.setStrictDeprecationMode(runContext.render(this.getStrictDeprecationMode()).as(Boolean.class).orElseThrow());
+            builder.setStrictDeprecationMode(runContext.render(this.getStrictDeprecationMode()).as(Boolean.class)
+                .orElseThrow(() -> new IllegalArgumentException("Missing required property: strictDeprecationMode")));
         }
 
         return new RestClientTransport(builder.build(), new JacksonJsonpMapper(MAPPER));
@@ -152,7 +154,8 @@ public class OpensearchConnection {
             credentialsProvider.setCredentials(
                 new AuthScope(null, -1),
                 new UsernamePasswordCredentials(
-                    runContext.render(this.basicAuth.username).as(String.class).orElseThrow(),
+                    runContext.render(this.basicAuth.username).as(String.class)
+                        .orElseThrow(() -> new IllegalArgumentException("Missing required property: basicAuth.username")),
                     (renderedPassword != null) ? renderedPassword.toCharArray() : null
                 )
             );
