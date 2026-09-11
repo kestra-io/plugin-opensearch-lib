@@ -106,4 +106,43 @@ class OpensearchConnectionTest {
         var exception = assertThrows(IllegalArgumentException.class, () -> connection.client(runContext));
         assertThat(exception.getMessage(), containsString("Invalid header format, expected `Name: Value` but got `NoColonHere`"));
     }
+
+    @Test
+    void shouldRejectHeaderWithBlankName() {
+        var runContext = runContextFactory.of();
+        var connection = OpensearchConnection.builder()
+            .hosts(Property.ofValue(List.of(host)))
+            .headers(Property.ofValue(List.of(": value")))
+            .build();
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> connection.client(runContext));
+        assertThat(exception.getMessage(), containsString("Invalid header format, expected `Name: Value` but got `: value`"));
+    }
+
+    @Test
+    void shouldAllowHeaderValueContainingAColon() throws Exception {
+        var runContext = runContextFactory.of();
+        var connection = OpensearchConnection.builder()
+            .hosts(Property.ofValue(List.of(host)))
+            .headers(Property.ofValue(List.of("X-Trace: a:b")))
+            .build();
+
+        try (var transport = connection.client(runContext)) {
+            var client = new OpenSearchClient(transport);
+            var info = client.info();
+
+            assertThat(info.clusterName(), notNullValue());
+        }
+    }
+
+    @Test
+    void shouldRejectHostWithoutScheme() {
+        var runContext = runContextFactory.of();
+        var connection = OpensearchConnection.builder()
+            .hosts(Property.ofValue(List.of("localhost:9200")))
+            .build();
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> connection.client(runContext));
+        assertThat(exception.getMessage(), containsString("Invalid host `localhost:9200`, expected a URL with scheme and host such as `https://opensearch.example:9200`"));
+    }
 }

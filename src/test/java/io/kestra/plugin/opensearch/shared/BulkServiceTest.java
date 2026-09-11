@@ -58,7 +58,7 @@ class BulkServiceTest {
         }
         assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("requests.count")).findFirst().orElseThrow().getValue(), is(1D));
         assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("records")).findFirst().orElseThrow().getValue(), is(3D));
-        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("requests.duration")).findFirst().orElseThrow().getValue(), is(Duration.ofNanos(42)));
+        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("requests.duration")).findFirst().orElseThrow().getValue(), is(Duration.ofMillis(42)));
     }
 
     @Test

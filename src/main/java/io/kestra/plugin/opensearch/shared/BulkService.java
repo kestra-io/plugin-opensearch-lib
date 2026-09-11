@@ -43,8 +43,8 @@ public final class BulkService {
         AtomicLong count = new AtomicLong();
         AtomicLong duration = new AtomicLong();
 
-        Flux<BulkResponse> flowable = operationFlux
-            .doOnNext(docWriteRequest -> count.incrementAndGet())
+        Flux<BulkResponse> bulkResponses = operationFlux
+            .doOnNext(operation -> count.incrementAndGet())
             .buffer(bufferSize, bufferSize)
             .map(throwFunction(indexRequests ->
             {
@@ -63,16 +63,16 @@ public final class BulkService {
             });
 
         // metrics & finalize
-        Long requestCount = flowable.count().blockOptional().orElse(0L);
+        Long requestCount = bulkResponses.count().blockOptional().orElse(0L);
         runContext.metric(Counter.of("requests.count", requestCount));
         runContext.metric(Counter.of("records", count.get()));
-        runContext.metric(Timer.of("requests.duration", Duration.ofNanos(duration.get())));
+        runContext.metric(Timer.of("requests.duration", Duration.ofMillis(duration.get())));
 
         logger.info(
             "Successfully send {} requests for {} records in {}",
             requestCount,
             count.get(),
-            Duration.ofNanos(duration.get())
+            Duration.ofMillis(duration.get())
         );
         return count.get();
     }

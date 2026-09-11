@@ -125,7 +125,9 @@ class OpensearchConnectionTlsTest {
     // clients do. Reproducing a genuine mismatch would require a real DNS name pointing at the
     // container (e.g. a custom /etc/hosts entry), which is impractical to do hermetically in this
     // test suite. Per review guidance, this sub-assertion is skipped rather than blocking the rest
-    // of this coverage; the production code still explicitly sets `ClientTlsStrategyBuilder`'s
-    // built-in policy (see `OpensearchConnection#httpAsyncClientBuilder`) so the JDK's own hostname
-    // check remains wired in for real DNS-based connections.
+    // of this coverage; the production code does NOT explicitly configure a hostname verification
+    // policy — it relies on `ClientTlsStrategyBuilder`'s default `HostnameVerificationPolicy.BUILTIN`,
+    // under which `AbstractClientTlsStrategy` calls `setEndpointIdentificationAlgorithm("HTTPS")` on
+    // the SSL engine, so the JDK itself enforces hostname/IP-SAN matching on the async path for real
+    // DNS-based connections.
 }
