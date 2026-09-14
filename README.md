@@ -35,36 +35,21 @@
 </p>
 <p align="center" style="color:grey;"><i>Get started with Kestra in 3 minutes.</i></p>
 
-# Kestra Opensearch Lib Plugin
+# Kestra OpenSearch Shared Library
 
 ## Why
 
-- What user problem does this solve? Teams need a concrete starting point for building and validating new Kestra plugins without recreating the same project scaffolding from scratch.
-- Why would a team adopt this plugin in a workflow? It gives plugin authors a ready-made reference repo they can adapt alongside their own build, test, and publishing workflow.
-- What operational/business outcome does it enable? It shortens plugin delivery time, reduces setup mistakes, and makes internal or partner plugin development more repeatable.
+- `plugin-opensearch` (OSS) and `plugin-ee-opensearch` (EE) each shipped a near-verbatim, but drifted, copy of the OpenSearch connection and bulk-indexing code. This library removes that duplication so both consumers evolve the connection and bulk logic in one place instead of drifting further apart.
+- It is a plain Java library, **not** a Kestra plugin: it ships no task, no trigger, no plugin docs or icons, and is not deployed to a running Kestra instance on its own.
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.opensearch-lib`.
-- Includes classes such as `Example`, `Trigger`.
-
-## Running Kestra locally with this plugin
-
-1. Build the shadow JAR: `./gradlew shadowJar`. The output lands in `build/libs/`.
-2. Run `docker compose up`. `docker-compose.yml` builds `kestra/kestra:latest` and mounts `build/libs/` to `/app/plugins/`, so Kestra picks up the jar on startup.
-3. Kestra UI is available at [localhost:8080](http://localhost:8080).
-
-### Plugins folder gotcha
-
-Mounting a host folder onto `/app/plugins/` replaces the container's plugins directory rather than adding to it. Core plugins (the ones logged as `Registered N core plugins`) are compiled into Kestra itself and aren't affected, but any additional plugin normally bundled in the base image under `/app/plugins/` (e.g. the Python script plugin) gets hidden once the mount is in place. If a flow you're testing depends on another plugin, copy its jar into `build/libs/` too before starting the container.
-
-### JFR startup error
-
-On some hosts, `command: server local` fails with:
-```
-Unable to create JFR repository directory using base location (/tmp)
-```
-`docker-compose.yml` works around this by mounting `/tmp` as `tmpfs`. If you build your own compose file or run Kestra via `docker run`, add the same workaround, e.g. `-v /tmp:/tmp` or `--tmpfs /tmp`. Tracked upstream in [kestra-io/kestra#17405](https://github.com/kestra-io/kestra/issues/17405).
+- Provides shared classes under `io.kestra.plugin.opensearch.shared`, consumed as `io.kestra.plugin:plugin-opensearch-lib`:
+  - `OpensearchConnection` — hosts, basic auth, custom headers, TLS trust (`trustAllSsl`, hostname verification always enforced), path prefix, and strict deprecation mode.
+  - `BulkService` — buffered bulk indexing (`executeBulk`) with `requests.count`, `records`, and `requests.duration` metrics.
+- Consumed by `plugin-opensearch` (OSS) and `plugin-ee-opensearch` (EE) only — see `AGENTS.md` for the contribution rules.
+- The published POM declares only the two OpenSearch artifacts (`opensearch-java`, `opensearch-rest-client`) as `api` dependencies; `kestra-core`, `slf4j`, and `reactor` are all `compileOnly` and intentionally not published transitively. This library is therefore only usable inside a Kestra plugin build that already provides those on its compile/runtime classpath — its Maven Central coordinates do not make it a standalone dependency.
+- **Not yet released**: until this library ships a tagged release on Maven Central, consumers resolve `io.kestra.plugin:plugin-opensearch-lib` from `mavenLocal()` (via `./gradlew publishToMavenLocal`) or the Sonatype snapshots repository.
 
 ## Documentation
 * Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)

@@ -1,8 +1,0 @@
-group: io.kestra.plugin.opensearch-lib
-name: "opensearch-lib"
-title: "Opensearch Lib"
-description: "Opensearch Lib plugin for Kestra"
-body: ""
-videos: []
-createdBy: "Kestra Core Team"
-managedBy: "Kestra Core Team"

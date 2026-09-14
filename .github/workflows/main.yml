@@ -43,5 +43,25 @@ jobs:
     uses: kestra-io/actions/.github/workflows/plugins.yml@main
     with:
       skip-test: ${{ github.event.inputs.skip-test == 'true' }}
+      generate-shadowjar: false
+      skip-indexing: true
       kestra-version: ${{ github.event.inputs.kestra-version }}
     secrets: inherit
+
+  trivy:
+    # `generate-shadowjar: false` above disables the reusable workflow's Trivy scan since this
+    # library ships no plugin jar; run a standalone dependency scan instead so dependabot PRs
+    # still get vulnerability signal on the OpenSearch client version this repo now owns.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scanners: vuln
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
