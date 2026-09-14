@@ -26,6 +26,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public final class BulkService {
     private static final int MAX_LOGGED_ERRORS = 20;
 
+    // Upper bound on how many operations may be buffered before the first bulk request leaves.
+    // Neither consumer historically capped this; a large value would buffer that many operations
+    // in memory, so guard against pathological input while leaving all reasonable batching (the
+    // default chunk is 1000) untouched.
+    static final int MAX_BUFFER_SIZE = 100_000;
+
     private BulkService() {
     }
 
@@ -36,6 +42,9 @@ public final class BulkService {
         Integer bufferSize) throws IOException {
         if (bufferSize == null || bufferSize <= 0) {
             throw new IllegalArgumentException("chunk/bufferSize must be a positive integer");
+        }
+        if (bufferSize > MAX_BUFFER_SIZE) {
+            throw new IllegalArgumentException("chunk/bufferSize must not exceed " + MAX_BUFFER_SIZE + " but was " + bufferSize);
         }
 
         Logger logger = runContext.logger();

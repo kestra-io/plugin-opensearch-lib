@@ -119,6 +119,17 @@ class BulkServiceTest {
         assertThat(zeroBufferException.getMessage(), containsString("chunk/bufferSize must be a positive integer"));
     }
 
+    @Test
+    void shouldRejectBufferSizeAboveCeiling() {
+        var runContext = runContextFactory.of();
+        var transport = mock(RestClientTransport.class);
+        var operations = Flux.just(indexOperation("1"));
+
+        var tooLargeException = assertThrows(IllegalArgumentException.class,
+            () -> BulkService.executeBulk(runContext, transport, operations, BulkService.MAX_BUFFER_SIZE + 1));
+        assertThat(tooLargeException.getMessage(), containsString("must not exceed " + BulkService.MAX_BUFFER_SIZE));
+    }
+
     private BulkOperation indexOperation(String id) {
         return BulkOperation.of(builder -> builder
             .index(IndexOperation.of((IndexOperation.Builder<Object> indexBuilder) -> indexBuilder
