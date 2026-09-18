@@ -54,7 +54,7 @@ jobs:
     # still get vulnerability signal on the OpenSearch client version this repo now owns.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@0.35.0
